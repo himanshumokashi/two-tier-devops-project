@@ -89,9 +89,3 @@ Screenshots of infrastructure provisioning, Ansible execution, Nginx configurati
 - Nginx reverse proxy configuration.
 - Python Flask application deployment.
 - Troubleshooting network and application connectivity.
-
-## Author
-
-Himanshu Mokashi
-
-DevOps | AWS | Terraform | Ansible | Linux
