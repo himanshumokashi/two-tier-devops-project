@@ -1,0 +1,70 @@
+---
+- name: Deploying Flask application
+  hosts: app
+  become: true
+
+  tasks:
+  - name: Create a application directory
+    ansible.builtin.file:
+      path: /opt/two-tier-app
+      state: directory
+      owner: ubuntu
+      group: ubuntu
+      mode: '0755'
+
+  - name: Copy Flask application
+    ansible.builtin.copy:
+      src: ../application/app.py
+      dest: /opt/two-tier-app/app.py
+      owner: ubuntu
+      group: ubuntu
+      mode: '0644'
+
+  - name: Copy requirements file
+    ansible.builtin.copy:
+      src: ../application/requirements.txt
+      dest: /opt/two-tier-app/requirements.txt
+      owner: ubuntu
+      group: ubuntu
+      mode: '0644'
+
+  - name: Install Python venv package
+    ansible.builtin.apt:
+        name: python3-venv
+        state: present
+        update_cache: true
+
+  - name: Create Python virtual environment
+    ansible.builtin.command:
+      cmd: python3 -m venv /opt/two-tier-app/venv
+      creates: /opt/two-tier-app/venv/bin/activate
+
+  - name: Install Flask dependencies
+    ansible.builtin.pip:
+      requirements: /opt/two-tier-app/requirements.txt
+      virtualenv: /opt/two-tier-app/venv
+
+  - name: Create Flask systemd service file
+    ansible.builtin.copy:
+      dest: /etc/systemd/system/flask-app.service
+      content: |
+        [Unit]
+        Description=Flask Application
+        After=network.target
+
+        [Service]
+        User=ubuntu
+        WorkingDirectory=/opt/two-tier-app
+        ExecStart=/opt/two-tier-app/venv/bin/python /opt/two-tier-app/app.py
+        Restart=always
+
+        [Install]
+        WantedBy=multi-user.target
+      mode: '0644'
+
+  - name: Start and enable Flask service
+    ansible.builtin.systemd:
+      name: flask-app
+      daemon_reload: true
+      state: restarted
+      enabled: true
